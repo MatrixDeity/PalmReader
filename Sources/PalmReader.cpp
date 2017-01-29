@@ -3,17 +3,18 @@
 //=================================================================================================
 
 PalmReader::PalmReader() :
-capture(CV_CAP_ANY),
-isRunning(false)
+	capture(CV_CAP_ANY),
+	classifier("Assets/hand.xml"),
+	isRunning(false)
 {
-	cv::namedWindow(WINDOW_NAME, cv::WINDOW_AUTOSIZE);
+	cv::namedWindow(WINDOW_NAME);
 }
 
 //=================================================================================================
 
 PalmReader::~PalmReader()
 {
-	cv::destroyWindow(WINDOW_NAME);
+	cv::destroyAllWindows();
 }
 
 //=================================================================================================
@@ -29,7 +30,7 @@ void PalmReader::run()
 	{
 		capture >> frame;
 		processFrame(frame);
-		cv::imshow(WINDOW_NAME, frame);
+		displayFrame(frame);
 		handleInput();
 	}
 }
@@ -49,6 +50,8 @@ bool PalmReader::getStatus() const
 	return isRunning;
 }
 
+//=================================================================================================
+
 void PalmReader::handleInput()
 {
 	int key = cv::waitKey(WAITING_TIME);
@@ -64,7 +67,15 @@ void PalmReader::handleInput()
 
 //=================================================================================================
 
-void PalmReader::processFrame(cv::Mat& frame)
+void PalmReader::processFrame(cv::Mat& frame) const
 {
 	cv::flip(frame, frame, 1);
+	cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+}
+
+//=================================================================================================
+
+void PalmReader::displayFrame(const cv::Mat& frame) const
+{
+	cv::imshow(WINDOW_NAME, frame);
 }

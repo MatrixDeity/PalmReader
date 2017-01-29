@@ -4,7 +4,6 @@
 
 int main()
 {
-	cv::Ptr<PalmReader> palmReader(new PalmReader);
-	palmReader->run();
+	PalmReader().run();
 	return 0;
 }
