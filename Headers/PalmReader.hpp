@@ -28,5 +28,6 @@ private:
 	void handleInput();
 	void processFrame(cv::Mat& frame) const;
 	void displayFrame(const cv::Mat& frame) const;
+	void detectPalm(cv::Mat& frame);
 };
 
