@@ -4,7 +4,7 @@
 
 PalmReader::PalmReader() :
 	capture(CV_CAP_ANY),
-	classifier("Assets/hand.xml"),
+	classifier("Assets/fist.xml"),
 	isRunning(false)
 {
 	cv::namedWindow(WINDOW_NAME);
@@ -87,7 +87,8 @@ void PalmReader::displayFrame(const cv::Mat& frame) const
 void PalmReader::detectPalm(cv::Mat& frame)
 {
 	std::vector<cv::Rect> hands;
-	classifier.detectMultiScale(frame, hands);
+	classifier.detectMultiScale(frame, hands, 1.1, 5, CV_HAAR_DO_CANNY_PRUNING, cv::Size(50, 50),
+		cv::Size(300, 300));
 	if (!hands.empty())
 		cv::rectangle(frame, hands[0], cv::Scalar(255, 0, 255));
 }
