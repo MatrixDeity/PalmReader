@@ -16,7 +16,7 @@ public:
 	bool getStatus() const;
 
 private:
-	const std::string WINDOW_NAME = "Palm Reader [v1.0]";
+	const std::string WINDOW_NAME = "Palm Reader [v1.1]";
 	const int WINDOW_WIDTH = 800;
 	const int WINDOW_HEIGHT = 600;
 	const int WAITING_TIME = 33;
@@ -28,5 +28,6 @@ private:
 	void handleInput();
 	void processFrame(cv::Mat& frame) const;
 	void displayFrame(const cv::Mat& frame) const;
+	void detectPalm(cv::Mat& frame);
 };
 
