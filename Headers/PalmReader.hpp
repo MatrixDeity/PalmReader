@@ -13,17 +13,17 @@ public:
 	~PalmReader();
 	void run();
 	void stop();
-	bool getStatus() const;
+	bool isRunning() const;
 
 private:
-	const std::string WINDOW_NAME = "Palm Reader [v1.0]";
+	const std::string WINDOW_NAME = "Palm Reader [v1.1]";
 	const int WINDOW_WIDTH = 800;
 	const int WINDOW_HEIGHT = 600;
 	const int WAITING_TIME = 33;
 
 	cv::VideoCapture capture;
 	cv::CascadeClassifier classifier;
-	bool isRunning;
+	bool running;
 
 	void handleInput();
 	void processFrame(cv::Mat& frame) const;

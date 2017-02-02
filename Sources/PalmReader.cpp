@@ -5,7 +5,7 @@
 PalmReader::PalmReader() :
 	capture(CV_CAP_ANY),
 	classifier("Assets/fist.xml"),
-	isRunning(false)
+	running(false)
 {
 	cv::namedWindow(WINDOW_NAME);
 }
@@ -21,12 +21,12 @@ PalmReader::~PalmReader()
 
 void PalmReader::run()
 {
-	if (isRunning)
+	if (running)
 		return;
-	isRunning = true;
+	running = true;
 
 	cv::Mat frame;
-	while (isRunning)
+	while (running)
 	{
 		capture >> frame;
 		processFrame(frame);
@@ -40,15 +40,15 @@ void PalmReader::run()
 
 void PalmReader::stop()
 {
-	if (isRunning)
-		isRunning = false;
+	if (running)
+		running = false;
 }
 
 //=================================================================================================
 
-bool PalmReader::getStatus() const
+bool PalmReader::isRunning() const
 {
-	return isRunning;
+	return running;
 }
 
 //=================================================================================================
