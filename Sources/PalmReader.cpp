@@ -31,14 +31,7 @@ void PalmReader::run()
 	{
 		capture >> frame;
 		processFrame(frame);
-		
-		if (counter < IDLE_FRAMES)
-		{
-			prepareNegative(frame, negative); // Try to pass the same variable
-		}
-		else
-			++counter;
-
+		prepareNegative(frame, negative); // Try to pass the same variable
 		displayFrame(frame);
 		handleInput();
 	}
@@ -92,7 +85,14 @@ void PalmReader::displayFrame(const cv::Mat& frame) const
 
 void PalmReader::prepareNegative(const cv::Mat& frame, cv::Mat& negative)
 {
+	static int callCounter = 0;
+
 	negative = frame;
 	detector.subtractBackground(negative);
-	detector.drawContour(negative);
+	if (callCounter >= IDLE_FRAMES)
+	{
+		detector.drawContours(negative);
+	}
+	else
+		++callCounter;
 }

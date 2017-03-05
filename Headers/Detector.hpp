@@ -12,7 +12,7 @@ public:
 	Detector(int history);
 	~Detector();
 	void subtractBackground(cv::Mat& frame);
-	void drawContour(cv::Mat& frame);
+	void drawContours(cv::Mat& frame);
 
 private:
 	cv::BackgroundSubtractorMOG2 subtractor;

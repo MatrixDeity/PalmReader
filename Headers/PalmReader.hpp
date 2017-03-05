@@ -22,7 +22,7 @@ private:
 	const int WINDOW_WIDTH = 800;
 	const int WINDOW_HEIGHT = 600;
 	const int WAITING_TIME = 33;
-	const int IDLE_FRAMES = 300;
+	const int IDLE_FRAMES = 20;
 
 	cv::VideoCapture capture;
 	Detector detector;
