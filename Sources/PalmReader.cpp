@@ -4,7 +4,7 @@
 
 PalmReader::PalmReader() :
 	capture(CV_CAP_ANY),
-	classifier("Assets/fist.xml"),
+	detector(100),
 	running(false)
 {
 	cv::namedWindow(WINDOW_NAME);
@@ -21,16 +21,24 @@ PalmReader::~PalmReader()
 
 void PalmReader::run()
 {
-	if (running)
+	if (isRunning())
 		return;
 	running = true;
 
-	cv::Mat frame;
-	while (running)
+	cv::Mat frame, negative;
+	int counter = 0;
+	while (isRunning())
 	{
 		capture >> frame;
 		processFrame(frame);
-		detectPalm(frame);
+		
+		if (counter < IDLE_FRAMES)
+		{
+			prepareNegative(frame, negative); // Try to pass the same variable
+		}
+		else
+			++counter;
+
 		displayFrame(frame);
 		handleInput();
 	}
@@ -40,7 +48,7 @@ void PalmReader::run()
 
 void PalmReader::stop()
 {
-	if (running)
+	if (isRunning())
 		running = false;
 }
 
@@ -68,11 +76,9 @@ void PalmReader::handleInput()
 
 //=================================================================================================
 
-void PalmReader::processFrame(cv::Mat& frame) const
+void PalmReader::processFrame(cv::Mat& frame)
 {
 	cv::flip(frame, frame, 1);
-	cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
-	cv::equalizeHist(frame, frame);
 }
 
 //=================================================================================================
@@ -84,11 +90,9 @@ void PalmReader::displayFrame(const cv::Mat& frame) const
 
 //=================================================================================================
 
-void PalmReader::detectPalm(cv::Mat& frame)
+void PalmReader::prepareNegative(const cv::Mat& frame, cv::Mat& negative)
 {
-	std::vector<cv::Rect> hands;
-	classifier.detectMultiScale(frame, hands, 1.1, 5, CV_HAAR_DO_CANNY_PRUNING, cv::Size(50, 50),
-		cv::Size(300, 300));
-	if (!hands.empty())
-		cv::rectangle(frame, hands[0], cv::Scalar(255, 0, 255));
+	negative = frame;
+	detector.subtractBackground(negative);
+	detector.drawContour(negative);
 }
