@@ -6,19 +6,24 @@
 
 //=================================================================================================
 
-class Detector
+namespace pr
 {
-public:
-	Detector(int history);
-	~Detector();
-	void subtractBackground(cv::Mat& frame);
-	void drawContours(cv::Mat& frame);
+	class Detector
+	{
+	public:
+		Detector(int palmMinSize);
+		~Detector();
+		void drawContours(cv::Mat& frame, const cv::Mat& processedFrame);
 
-private:
-	cv::BackgroundSubtractorMOG2 subtractor;
-	std::vector<std::vector<cv::Point>> contours;
-	std::vector<std::vector<cv::Point>> hull;
-	std::vector<cv::Vec4i> hierarchy;
-	int historySize;
-};
+	private:
+		typedef std::vector<std::vector<cv::Point>> ContoursArray;
+
+		ContoursArray contours;
+		ContoursArray hull;
+		std::vector<cv::Vec4i> hierarchy;
+		int palmMinSize;
+
+		ContoursArray::const_iterator findMaxArea();
+	};
+}
 

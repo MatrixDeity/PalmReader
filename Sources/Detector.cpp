@@ -2,43 +2,48 @@
 
 //=================================================================================================
 
-Detector::Detector(int history) :
-	subtractor(history, 16.0F),
+pr::Detector::Detector(int palmMinSize) :
 	contours(),
-	hull(),
 	hierarchy(),
-	historySize(history)
+	hull(1),
+	palmMinSize(palmMinSize)
 {
 }
 
 //=================================================================================================
 
-Detector::~Detector()
+pr::Detector::~Detector()
 {
 }
 
 //=================================================================================================
 
-void Detector::subtractBackground(cv::Mat& frame)
+void pr::Detector::drawContours(cv::Mat& frame, const cv::Mat& processedFrame)
 {
-	subtractor(frame, frame);
-}
-
-//=================================================================================================
-
-void Detector::drawContours(cv::Mat& frame)
-{
-	/*
-	std::vector<std::vector<cv::Point>> contours, hull;
-	std::vector<cv::Vec4i> hierarchy;
-	findContours(frame, contours, hierarchy, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE,
+	findContours(processedFrame, contours, hierarchy, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE,
 		cv::Point(0, 0));
+	auto maxArea = findMaxArea();
+	if (maxArea != contours.end())
+	{
+		cv::convexHull(cv::Mat(*maxArea), hull[0]);
+		cv::drawContours(frame, hull, 0, cv::Scalar(255.0F, 0.0F, 0.0F));
+	}
+}
 
-	hull.resize(contours.size());
-	for (int i = 0; i < contours.size(); ++i)
-		cv::convexHull(cv::Mat(contours[i]), hull[i]);
+//=================================================================================================
 
-	for (int i = 0; i < hull.size(); ++i)
-		cv::drawContours(frame, hull, i, cv::Scalar(255.0F, 0.0F, 0.0F));
-	*/
+pr::Detector::ContoursArray::const_iterator pr::Detector::findMaxArea()
+{
+	int maxSize(0), size;
+	auto maxContour = contours.cend();
+	for (auto itr = contours.cbegin(); itr != contours.cend(); ++itr)
+	{
+		size = cv::contourArea(*itr);
+		if (size > maxSize && size >= palmMinSize)
+		{
+			size = maxSize;
+			maxContour = itr;
+		}
+	}
+	return maxContour;
 }

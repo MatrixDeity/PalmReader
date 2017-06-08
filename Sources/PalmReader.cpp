@@ -2,36 +2,43 @@
 
 //=================================================================================================
 
-PalmReader::PalmReader() :
+pr::PalmReader::PalmReader(SettingsManager& settings) :
+	settings(settings),
 	capture(CV_CAP_ANY),
-	detector(100),
-	running(false)
+	detector(settings.palmSize),
+	subtractor(settings.historyLength, settings.thresholdRate),
+	running(false),
+	learned(false),
+	pause(true)
 {
-	cv::namedWindow(WINDOW_NAME);
+	cv::namedWindow(settings.windowName);
 }
 
 //=================================================================================================
 
-PalmReader::~PalmReader()
+pr::PalmReader::~PalmReader()
 {
 	cv::destroyAllWindows();
 }
 
 //=================================================================================================
 
-void PalmReader::run()
+void pr::PalmReader::run()
 {
 	if (isRunning())
 		return;
 	running = true;
 
-	cv::Mat frame, negative;
-	int counter = 0;
+	cv::Mat frame, processedFrame;
 	while (isRunning())
 	{
 		capture >> frame;
-		processFrame(frame);
-		prepareNegative(frame, negative); // Try to pass the same variable
+		processFrame(frame, processedFrame);
+		if (!pause)
+		{
+			applySubtractor(processedFrame);
+			buildContours(frame, processedFrame);
+		}
 		displayFrame(frame);
 		handleInput();
 	}
@@ -39,7 +46,7 @@ void PalmReader::run()
 
 //=================================================================================================
 
-void PalmReader::stop()
+void pr::PalmReader::stop()
 {
 	if (isRunning())
 		running = false;
@@ -47,20 +54,70 @@ void PalmReader::stop()
 
 //=================================================================================================
 
-bool PalmReader::isRunning() const
+bool pr::PalmReader::isRunning() const
 {
 	return running;
 }
 
 //=================================================================================================
 
-void PalmReader::handleInput()
+void pr::PalmReader::processFrame(cv::Mat& frame, cv::Mat& processedFrame)
 {
-	int key = cv::waitKey(WAITING_TIME);
+	cv::flip(frame, frame, 1);
+	cv::cvtColor(frame, processedFrame, cv::COLOR_RGBA2GRAY);
+}
+
+//=================================================================================================
+
+void pr::PalmReader::applySubtractor(cv::Mat& frame)
+{
+	static int callingCounter = 0;
+
+	if (!learned)
+	{
+		subtractor(frame, frame, settings.learningRate);
+		++callingCounter;
+		if (callingCounter >= settings.idleFrames)
+		{
+			learned = true;
+			callingCounter = 0;
+		}
+	}
+	else
+	{
+		subtractor(frame, frame, 0.0);
+	}
+}
+
+//=================================================================================================
+
+void pr::PalmReader::buildContours(cv::Mat& frame, const cv::Mat& processedFrame)
+{
+	if (!learned)
+		return;
+	
+	detector.drawContours(frame, processedFrame);
+}
+
+//=================================================================================================
+
+void pr::PalmReader::displayFrame(const cv::Mat& frame) const
+{
+	cv::imshow(settings.windowName, frame);
+}
+
+//=================================================================================================
+
+void pr::PalmReader::handleInput()
+{
+	int key = cv::waitKey(settings.waitingTime);
 	switch (key)
 	{
 	case VK_ESCAPE:
 		stop();
+		break;
+	case VK_RETURN:
+		switchPause();
 		break;
 	default:
 		break;
@@ -69,30 +126,9 @@ void PalmReader::handleInput()
 
 //=================================================================================================
 
-void PalmReader::processFrame(cv::Mat& frame)
+void pr::PalmReader::switchPause()
 {
-	cv::flip(frame, frame, 1);
-}
-
-//=================================================================================================
-
-void PalmReader::displayFrame(const cv::Mat& frame) const
-{
-	cv::imshow(WINDOW_NAME, frame);
-}
-
-//=================================================================================================
-
-void PalmReader::prepareNegative(const cv::Mat& frame, cv::Mat& negative)
-{
-	static int callCounter = 0;
-
-	negative = frame;
-	detector.subtractBackground(negative);
-	if (callCounter >= IDLE_FRAMES)
-	{
-		detector.drawContours(negative);
-	}
-	else
-		++callCounter;
+	pause = !pause;
+	if (pause)
+		learned = false;
 }
