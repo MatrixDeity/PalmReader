@@ -1,9 +1,10 @@
 #include "PalmReader.hpp"
+#include "SettingsManager.hpp"
 
 //=================================================================================================
 
-int main()
+int main(int argc, char** argv)
 {
-	PalmReader().run();
+	pr::PalmReader(pr::SettingsManager(argv[0])).run();
 	return 0;
 }

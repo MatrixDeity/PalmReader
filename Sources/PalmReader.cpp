@@ -2,35 +2,43 @@
 
 //=================================================================================================
 
-PalmReader::PalmReader() :
+pr::PalmReader::PalmReader(SettingsManager& settings) :
+	settings(settings),
 	capture(CV_CAP_ANY),
-	classifier("Assets/fist.xml"),
-	isRunning(false)
+	detector(settings.palmSize),
+	subtractor(settings.historyLength, settings.thresholdRate),
+	running(false),
+	learned(false),
+	pause(true)
 {
-	cv::namedWindow(WINDOW_NAME);
+	cv::namedWindow(settings.windowName);
 }
 
 //=================================================================================================
 
-PalmReader::~PalmReader()
+pr::PalmReader::~PalmReader()
 {
 	cv::destroyAllWindows();
 }
 
 //=================================================================================================
 
-void PalmReader::run()
+void pr::PalmReader::run()
 {
-	if (isRunning)
+	if (isRunning())
 		return;
-	isRunning = true;
+	running = true;
 
-	cv::Mat frame;
-	while (isRunning)
+	cv::Mat frame, processedFrame;
+	while (isRunning())
 	{
 		capture >> frame;
-		processFrame(frame);
-		detectPalm(frame);
+		processFrame(frame, processedFrame);
+		if (!pause)
+		{
+			applySubtractor(processedFrame);
+			buildContours(frame, processedFrame);
+		}
 		displayFrame(frame);
 		handleInput();
 	}
@@ -38,28 +46,78 @@ void PalmReader::run()
 
 //=================================================================================================
 
-void PalmReader::stop()
+void pr::PalmReader::stop()
 {
-	if (isRunning)
-		isRunning = false;
+	if (isRunning())
+		running = false;
 }
 
 //=================================================================================================
 
-bool PalmReader::getStatus() const
+bool pr::PalmReader::isRunning() const
 {
-	return isRunning;
+	return running;
 }
 
 //=================================================================================================
 
-void PalmReader::handleInput()
+void pr::PalmReader::processFrame(cv::Mat& frame, cv::Mat& processedFrame)
 {
-	int key = cv::waitKey(WAITING_TIME);
+	cv::flip(frame, frame, 1);
+	cv::cvtColor(frame, processedFrame, cv::COLOR_RGBA2GRAY);
+}
+
+//=================================================================================================
+
+void pr::PalmReader::applySubtractor(cv::Mat& frame)
+{
+	static int callingCounter = 0;
+
+	if (!learned)
+	{
+		subtractor(frame, frame, settings.learningRate);
+		++callingCounter;
+		if (callingCounter >= settings.idleFrames)
+		{
+			learned = true;
+			callingCounter = 0;
+		}
+	}
+	else
+	{
+		subtractor(frame, frame, 0.0);
+	}
+}
+
+//=================================================================================================
+
+void pr::PalmReader::buildContours(cv::Mat& frame, const cv::Mat& processedFrame)
+{
+	if (!learned)
+		return;
+	
+	detector.drawContours(frame, processedFrame);
+}
+
+//=================================================================================================
+
+void pr::PalmReader::displayFrame(const cv::Mat& frame) const
+{
+	cv::imshow(settings.windowName, frame);
+}
+
+//=================================================================================================
+
+void pr::PalmReader::handleInput()
+{
+	int key = cv::waitKey(settings.waitingTime);
 	switch (key)
 	{
 	case VK_ESCAPE:
 		stop();
+		break;
+	case VK_RETURN:
+		switchPause();
 		break;
 	default:
 		break;
@@ -68,27 +126,9 @@ void PalmReader::handleInput()
 
 //=================================================================================================
 
-void PalmReader::processFrame(cv::Mat& frame) const
+void pr::PalmReader::switchPause()
 {
-	cv::flip(frame, frame, 1);
-	cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
-	cv::equalizeHist(frame, frame);
-}
-
-//=================================================================================================
-
-void PalmReader::displayFrame(const cv::Mat& frame) const
-{
-	cv::imshow(WINDOW_NAME, frame);
-}
-
-//=================================================================================================
-
-void PalmReader::detectPalm(cv::Mat& frame)
-{
-	std::vector<cv::Rect> hands;
-	classifier.detectMultiScale(frame, hands, 1.1, 5, CV_HAAR_DO_CANNY_PRUNING, cv::Size(50, 50),
-		cv::Size(300, 300));
-	if (!hands.empty())
-		cv::rectangle(frame, hands[0], cv::Scalar(255, 0, 255));
+	pause = !pause;
+	if (pause)
+		learned = false;
 }

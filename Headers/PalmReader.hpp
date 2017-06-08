@@ -4,30 +4,36 @@
 #include <string>
 #include <Windows.h>
 
+#include "SettingsManager.hpp"
+#include "Detector.hpp"
+
 //=================================================================================================
 
-class PalmReader
+namespace pr
 {
-public:
-	PalmReader();
-	~PalmReader();
-	void run();
-	void stop();
-	bool getStatus() const;
+	class PalmReader
+	{
+	public:
+		PalmReader(SettingsManager& settings);
+		~PalmReader();
+		void run();
+		void stop();
+		bool isRunning() const;
 
-private:
-	const std::string WINDOW_NAME = "Palm Reader [v1.1]";
-	const int WINDOW_WIDTH = 800;
-	const int WINDOW_HEIGHT = 600;
-	const int WAITING_TIME = 33;
+	private:
+		pr::SettingsManager settings;
+		cv::VideoCapture capture;
+		pr::Detector detector;
+		cv::BackgroundSubtractorMOG2 subtractor;
+		bool running;
+		bool learned;
+		bool pause;
 
-	cv::VideoCapture capture;
-	cv::CascadeClassifier classifier;
-	bool isRunning;
-
-	void handleInput();
-	void processFrame(cv::Mat& frame) const;
-	void displayFrame(const cv::Mat& frame) const;
-	void detectPalm(cv::Mat& frame);
-};
-
+		void processFrame(cv::Mat& frame, cv::Mat& processedFrame);
+		void applySubtractor(cv::Mat& frame);
+		void buildContours(cv::Mat& frame, const cv::Mat& processedFrame);
+		void displayFrame(const cv::Mat& frame) const;
+		void handleInput();
+		void switchPause();
+	};
+}
