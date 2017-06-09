@@ -1,6 +1,7 @@
 #pragma once
 
 #include <opencv2/opencv.hpp>
+#include <iostream>
 #include <string>
 #include <Windows.h>
 
@@ -14,7 +15,7 @@ namespace pr
 	class PalmReader
 	{
 	public:
-		PalmReader(SettingsManager& settings);
+		PalmReader(const SettingsManager& settings);
 		~PalmReader();
 		void run();
 		void stop();
@@ -29,11 +30,12 @@ namespace pr
 		bool learned;
 		bool pause;
 
-		void processFrame(cv::Mat& frame, cv::Mat& processedFrame);
+		void processFrame(cv::Mat& frame, cv::Mat& processedFrame) const;
 		void applySubtractor(cv::Mat& frame);
 		void buildContours(cv::Mat& frame, const cv::Mat& processedFrame);
 		void displayFrame(const cv::Mat& frame) const;
 		void handleInput();
 		void switchPause();
+		void print(const std::string& message) const;
 	};
 }

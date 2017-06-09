@@ -32,7 +32,7 @@ void pr::Detector::drawContours(cv::Mat& frame, const cv::Mat& processedFrame)
 
 //=================================================================================================
 
-pr::Detector::ContoursArray::const_iterator pr::Detector::findMaxArea()
+pr::Detector::ContoursArray::const_iterator pr::Detector::findMaxArea() const
 {
 	int maxSize(0), size;
 	auto maxContour = contours.cend();

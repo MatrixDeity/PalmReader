@@ -21,6 +21,7 @@ namespace pr
 		double learningRate;
 
 		int waitingTime;
+		bool suspended;
 
 		SettingsManager(const std::string& pathToExe) :
 			path(pathToExe.substr(0, pathToExe.find_last_of("\\")) + "\\settings.ini")
@@ -44,6 +45,7 @@ namespace pr
 
 			section = "Other";
 			loadSetting(section, "waitingTime", waitingTime);
+			loadSetting(section, "suspended", suspended);
 		}
 
 	private:

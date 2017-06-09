@@ -23,7 +23,7 @@ namespace pr
 		std::vector<cv::Vec4i> hierarchy;
 		int palmMinSize;
 
-		ContoursArray::const_iterator findMaxArea();
+		ContoursArray::const_iterator findMaxArea() const;
 	};
 }
 

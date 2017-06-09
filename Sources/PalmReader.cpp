@@ -2,14 +2,14 @@
 
 //=================================================================================================
 
-pr::PalmReader::PalmReader(SettingsManager& settings) :
+pr::PalmReader::PalmReader(const SettingsManager& settings) :
 	settings(settings),
 	capture(CV_CAP_ANY),
 	detector(settings.palmSize),
 	subtractor(settings.historyLength, settings.thresholdRate),
 	running(false),
 	learned(false),
-	pause(true)
+	pause(settings.suspended)
 {
 	cv::namedWindow(settings.windowName);
 }
@@ -29,6 +29,7 @@ void pr::PalmReader::run()
 		return;
 	running = true;
 
+	print("PalmReader is running!");
 	cv::Mat frame, processedFrame;
 	while (isRunning())
 	{
@@ -48,8 +49,11 @@ void pr::PalmReader::run()
 
 void pr::PalmReader::stop()
 {
-	if (isRunning())
-		running = false;
+	if (!isRunning())
+		return;
+	
+	running = false;
+	print("PalmReader stopped!");
 }
 
 //=================================================================================================
@@ -61,7 +65,7 @@ bool pr::PalmReader::isRunning() const
 
 //=================================================================================================
 
-void pr::PalmReader::processFrame(cv::Mat& frame, cv::Mat& processedFrame)
+void pr::PalmReader::processFrame(cv::Mat& frame, cv::Mat& processedFrame) const
 {
 	cv::flip(frame, frame, 1);
 	cv::cvtColor(frame, processedFrame, cv::COLOR_RGBA2GRAY);
@@ -81,6 +85,7 @@ void pr::PalmReader::applySubtractor(cv::Mat& frame)
 		{
 			learned = true;
 			callingCounter = 0;
+			print("Subtractor learned!");
 		}
 	}
 	else
@@ -110,13 +115,15 @@ void pr::PalmReader::displayFrame(const cv::Mat& frame) const
 
 void pr::PalmReader::handleInput()
 {
-	int key = cv::waitKey(settings.waitingTime);
+	int key = ::tolower(cv::waitKey(settings.waitingTime));
 	switch (key)
 	{
 	case VK_ESCAPE:
+	case 'q':
 		stop();
 		break;
-	case VK_RETURN:
+	case VK_SPACE:
+	case 'p':
 		switchPause();
 		break;
 	default:
@@ -130,5 +137,17 @@ void pr::PalmReader::switchPause()
 {
 	pause = !pause;
 	if (pause)
+	{
 		learned = false;
+		print("Recognition suspended!");
+	}
+	else
+		print("Recognition resumed!");
+}
+
+//=================================================================================================
+
+void pr::PalmReader::print(const std::string& message) const
+{
+	std::cout << "[System]: " << message << std::endl;
 }
