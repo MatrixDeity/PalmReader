@@ -14,8 +14,8 @@ namespace pr
 		int windowWidth;
 		int windowHeight;
 
-		int idleFrames;
-		int palmSize;
+		int learningFrames;
+		double palmMinSize;
 		int historyLength;
 		float thresholdRate;
 		double learningRate;
@@ -24,12 +24,17 @@ namespace pr
 		bool suspended;
 
 		SettingsManager(const std::string& pathToExe) :
-			path(pathToExe.substr(0, pathToExe.find_last_of("\\")) + "\\settings.ini")
+			path(pathToExe.substr(0, pathToExe.find_last_of("\\")).append("\\settings.ini"))
 		{
-			reloadSettings();
+			loadSettings();
 		}
 
-		void reloadSettings()
+	private:
+		static const int MAX_CONTENT_SIZE = 256;
+
+		std::string path;
+
+		void loadSettings()
 		{
 			std::string section = "Window";
 			loadSetting(section, "windowName", windowName);
@@ -37,8 +42,8 @@ namespace pr
 			loadSetting(section, "windowHeight", windowHeight);
 
 			section = "Detector";
-			loadSetting(section, "idleFrames", idleFrames);
-			loadSetting(section, "palmSize", palmSize);
+			loadSetting(section, "learningFrames", learningFrames);
+			loadSetting(section, "palmMinSize", palmMinSize);
 			loadSetting(section, "historyLength", historyLength);
 			loadSetting(section, "thresholdRate", thresholdRate);
 			loadSetting(section, "learningRate", learningRate);
@@ -47,11 +52,6 @@ namespace pr
 			loadSetting(section, "waitingTime", waitingTime);
 			loadSetting(section, "suspended", suspended);
 		}
-
-	private:
-		static const int MAX_CONTENT_SIZE = 256;
-
-		std::string path;
 
 		template <typename T>
 		void loadSetting(const std::string& section, const std::string& key, T& setting)
@@ -70,7 +70,7 @@ namespace pr
 			char str[MAX_CONTENT_SIZE];
 			GetPrivateProfileStringA(section.c_str(), key.c_str(), "0", str,
 				MAX_CONTENT_SIZE, path.c_str());
-			setting.append(str);
+			setting.assign(str);
 		}
 	};
 }

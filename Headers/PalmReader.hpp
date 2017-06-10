@@ -25,16 +25,19 @@ namespace pr
 		pr::SettingsManager settings;
 		cv::VideoCapture capture;
 		pr::Detector detector;
+		pr::Detector::Gesture lastGesture;
 		cv::BackgroundSubtractorMOG2 subtractor;
 		bool running;
-		bool learned;
 		bool pause;
+		int frameOfLearning;
 
 		void processFrame(cv::Mat& frame, cv::Mat& processedFrame) const;
 		void applySubtractor(cv::Mat& frame);
 		void buildContours(cv::Mat& frame, const cv::Mat& processedFrame);
+		void processGesture();
 		void displayFrame(const cv::Mat& frame) const;
 		void handleInput();
+		bool isLearned() const;
 		void switchPause();
 		void print(const std::string& message) const;
 		void showHelp() const;

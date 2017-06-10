@@ -5,11 +5,12 @@
 pr::PalmReader::PalmReader(const SettingsManager& settings) :
 	settings(settings),
 	capture(CV_CAP_ANY),
-	detector(settings.palmSize),
+	detector(settings.palmMinSize),
+	lastGesture(pr::Detector::Gesture::NONE),
 	subtractor(settings.historyLength, settings.thresholdRate),
 	running(false),
-	learned(false),
-	pause(settings.suspended)
+	pause(settings.suspended),
+	frameOfLearning(0)
 {
 	cv::namedWindow(settings.windowName);
 }
@@ -40,6 +41,7 @@ void pr::PalmReader::run()
 		{
 			applySubtractor(processedFrame);
 			buildContours(frame, processedFrame);
+			processGesture();
 		}
 		displayFrame(frame);
 		handleInput();
@@ -76,33 +78,47 @@ void pr::PalmReader::processFrame(cv::Mat& frame, cv::Mat& processedFrame) const
 
 void pr::PalmReader::applySubtractor(cv::Mat& frame)
 {
-	static int callingCounter = 0;
-
-	if (!learned)
+	if (!isLearned())
 	{
 		subtractor(frame, frame, settings.learningRate);
-		++callingCounter;
-		if (callingCounter >= settings.idleFrames)
-		{
-			learned = true;
-			callingCounter = 0;
+		++frameOfLearning;
+		if (isLearned())
 			print("Subtractor learned!");
-		}
 	}
 	else
-	{
 		subtractor(frame, frame, 0.0);
-	}
 }
 
 //=================================================================================================
 
 void pr::PalmReader::buildContours(cv::Mat& frame, const cv::Mat& processedFrame)
 {
-	if (!learned)
+	if (!isLearned())
 		return;
 	
-	detector.drawContours(frame, processedFrame);
+	detector.buildContours(frame, processedFrame);
+}
+
+//=================================================================================================
+
+void pr::PalmReader::processGesture()
+{
+	using Gesture = pr::Detector::Gesture;
+	Gesture currentGesture = detector.recognize();
+	if (lastGesture == currentGesture)
+		return;
+	switch (currentGesture)
+	{
+	case Gesture::FIRST:
+		print("First gesture recognized!");
+		break;
+	case Gesture::SECOND:
+		print("Second gesture recognized!");
+		break;
+	default:
+		break;
+	}
+	lastGesture = currentGesture;
 }
 
 //=================================================================================================
@@ -137,12 +153,19 @@ void pr::PalmReader::handleInput()
 
 //=================================================================================================
 
+bool pr::PalmReader::isLearned() const
+{
+	return frameOfLearning >= settings.learningFrames;
+}
+
+//=================================================================================================
+
 void pr::PalmReader::switchPause()
 {
 	pause = !pause;
 	if (pause)
 	{
-		learned = false;
+		frameOfLearning = 0;
 		print("Recognition suspended!");
 	}
 	else
