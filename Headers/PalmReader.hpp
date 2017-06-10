@@ -37,5 +37,6 @@ namespace pr
 		void handleInput();
 		void switchPause();
 		void print(const std::string& message) const;
+		void showHelp() const;
 	};
 }

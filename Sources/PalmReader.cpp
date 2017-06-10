@@ -30,6 +30,7 @@ void pr::PalmReader::run()
 	running = true;
 
 	print("PalmReader is running!");
+	showHelp();
 	cv::Mat frame, processedFrame;
 	while (isRunning())
 	{
@@ -126,6 +127,9 @@ void pr::PalmReader::handleInput()
 	case 'p':
 		switchPause();
 		break;
+	case 'h':
+		showHelp();
+		break;
 	default:
 		break;
 	}
@@ -150,4 +154,18 @@ void pr::PalmReader::switchPause()
 void pr::PalmReader::print(const std::string& message) const
 {
 	std::cout << "[System]: " << message << std::endl;
+}
+
+//=================================================================================================
+
+void pr::PalmReader::showHelp() const
+{
+	std::cout
+		<< "[Helper]:\n"
+		<< "The PalmReader welcomes you!\n"
+		<< "- Press 'Space' or 'P' to resume / suspend recognition.\n"
+		<< "- Press 'H' to show this help.\n"
+		<< "- Press 'Esc' or 'Q' to quit program.\n"
+		<< "Writen by MatrixDeity, 2016 - 2017."
+		<< std::endl;
 }
