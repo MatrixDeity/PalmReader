@@ -19,6 +19,7 @@ namespace pr
 		int historyLength;
 		float thresholdRate;
 		double learningRate;
+		double defectMinLength;
 
 		int waitingTime;
 		bool suspended;
@@ -41,12 +42,13 @@ namespace pr
 			loadSetting(section, "windowWidth", windowWidth);
 			loadSetting(section, "windowHeight", windowHeight);
 
-			section = "Detector";
+			section = "Recognition";
 			loadSetting(section, "learningFrames", learningFrames);
 			loadSetting(section, "palmMinSize", palmMinSize);
 			loadSetting(section, "historyLength", historyLength);
 			loadSetting(section, "thresholdRate", thresholdRate);
 			loadSetting(section, "learningRate", learningRate);
+			loadSetting(section, "defectMinLength", defectMinLength);
 
 			section = "Other";
 			loadSetting(section, "waitingTime", waitingTime);

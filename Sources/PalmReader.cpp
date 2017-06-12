@@ -5,7 +5,7 @@
 pr::PalmReader::PalmReader(const SettingsManager& settings) :
 	settings(settings),
 	capture(CV_CAP_ANY),
-	detector(settings.palmMinSize),
+	detector(settings.palmMinSize, settings.defectMinLength),
 	lastGesture(pr::Detector::Gesture::NONE),
 	subtractor(settings.historyLength, settings.thresholdRate),
 	running(false),
@@ -116,7 +116,7 @@ void pr::PalmReader::processGesture()
 		print("Second gesture recognized!");
 		break;
 	default:
-		break;
+		return;
 	}
 	lastGesture = currentGesture;
 }
@@ -166,6 +166,7 @@ void pr::PalmReader::switchPause()
 	if (pause)
 	{
 		frameOfLearning = 0;
+		detector.reset();
 		print("Recognition suspended!");
 	}
 	else
