@@ -14,42 +14,50 @@ namespace pr
 		int windowWidth;
 		int windowHeight;
 
-		int idleFrames;
-		int palmSize;
+		int learningFrames;
+		double palmMinSize;
 		int historyLength;
 		float thresholdRate;
 		double learningRate;
+		double defectMinLength;
 
 		int waitingTime;
+		bool suspended;
 
 		SettingsManager(const std::string& pathToExe) :
-			path(pathToExe.substr(0, pathToExe.find_last_of("\\")) + "\\settings.ini")
+			path(pathToExe.substr(0, pathToExe.find_last_of("\\")).append("\\settings.ini"))
 		{
-			reloadSettings();
+			loadSettings();
 		}
 
-		void reloadSettings()
+		~SettingsManager()
 		{
-			std::string section = "Window";
-			loadSetting(section, "windowName", windowName);
-			loadSetting(section, "windowWidth", windowWidth);
-			loadSetting(section, "windowHeight", windowHeight);
-
-			section = "Detector";
-			loadSetting(section, "idleFrames", idleFrames);
-			loadSetting(section, "palmSize", palmSize);
-			loadSetting(section, "historyLength", historyLength);
-			loadSetting(section, "thresholdRate", thresholdRate);
-			loadSetting(section, "learningRate", learningRate);
-
-			section = "Other";
-			loadSetting(section, "waitingTime", waitingTime);
 		}
 
 	private:
 		static const int MAX_CONTENT_SIZE = 256;
 
 		std::string path;
+
+		void loadSettings()
+		{
+			std::string section = "Window";
+			loadSetting(section, "windowName", windowName);
+			loadSetting(section, "windowWidth", windowWidth);
+			loadSetting(section, "windowHeight", windowHeight);
+
+			section = "Recognition";
+			loadSetting(section, "learningFrames", learningFrames);
+			loadSetting(section, "palmMinSize", palmMinSize);
+			loadSetting(section, "historyLength", historyLength);
+			loadSetting(section, "thresholdRate", thresholdRate);
+			loadSetting(section, "learningRate", learningRate);
+			loadSetting(section, "defectMinLength", defectMinLength);
+
+			section = "Other";
+			loadSetting(section, "waitingTime", waitingTime);
+			loadSetting(section, "suspended", suspended);
+		}
 
 		template <typename T>
 		void loadSetting(const std::string& section, const std::string& key, T& setting)
@@ -68,7 +76,7 @@ namespace pr
 			char str[MAX_CONTENT_SIZE];
 			GetPrivateProfileStringA(section.c_str(), key.c_str(), "0", str,
 				MAX_CONTENT_SIZE, path.c_str());
-			setting.append(str);
+			setting.assign(str);
 		}
 	};
 }
