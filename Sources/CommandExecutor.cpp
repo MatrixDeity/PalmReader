@@ -2,7 +2,8 @@
 
 //=================================================================================================
 
-pr::CommandExecutor::CommandExecutor()
+pr::CommandExecutor::CommandExecutor() :
+	commands()
 {
 }
 
@@ -16,25 +17,30 @@ pr::CommandExecutor::~CommandExecutor()
 
 void pr::CommandExecutor::execute(const std::string& commandName) const
 {
-	if (functions.find(commandName) == functions.end())
+	if (commands.find(commandName) == commands.end())
 		return;
 
-	functions.at(commandName)();
+	commands.at(commandName)();
 }
 
 //=================================================================================================
 
 void pr::CommandExecutor::addCommand(const std::string& commandName, const Command& command)
 {
-	functions.emplace(commandName, command);
+	commands.emplace(commandName, command);
 }
 
 //=================================================================================================
 
 void pr::CommandExecutor::removeCommand(const std::string& commandName)
 {
-	if (functions.find(commandName) == functions.end())
+	if (commands.find(commandName) == commands.end())
 		return;
 
-	functions.erase(commandName);
+	commands.erase(commandName);
+}
+
+const pr::CommandExecutor::Commands& pr::CommandExecutor::getCommands() const
+{
+	return commands;
 }

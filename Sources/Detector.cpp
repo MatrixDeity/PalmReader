@@ -2,14 +2,18 @@
 
 //=================================================================================================
 
-pr::Detector::Detector(double palmMinSize, double defectMinLength) :
-	PALM_MIN_SIZE(palmMinSize),
-	DEFECT_MIN_LENGTH(defectMinLength),
+pr::Detector::Detector(const SettingsManager& settings) :
+	PALM_MIN_SIZE(settings.palmMinSize),
+	DEFECT_MIN_LENGTH(settings.defectMinLength),
+	LEARNING_RATE(settings.learningRate),
+	LEARNING_FRAMES(settings.learningFrames),
+	subtractor(settings.historyLength, settings.thresholdRate),
 	contours(),
-	hierarchy(),
 	hull(1),
 	hullNum(),
-	defects()
+	defects(),
+	hierarchy(),
+	frameOfLearning(0)
 {
 }
 
@@ -34,7 +38,7 @@ void pr::Detector::buildContours(cv::Mat& frame, const cv::Mat& processedFrame)
 		cv::convexityDefects(*workingContour, hullNum, defects);
 	}
 	else if (!defects.empty())
-		reset();
+		defects.clear();
 }
 
 //=================================================================================================
@@ -51,8 +55,31 @@ pr::Detector::Gesture pr::Detector::recognize()
 
 //=================================================================================================
 
+void pr::Detector::applySubtractor(cv::Mat& processedFrame)
+{
+	subtractor(processedFrame, processedFrame, 0.0);
+}
+
+//=================================================================================================
+
+void pr::Detector::learnSubtractor(cv::Mat& processedFrame)
+{
+	subtractor(processedFrame, processedFrame, LEARNING_RATE);
+	++frameOfLearning;
+}
+
+//=================================================================================================
+
+bool pr::Detector::isLearned() const
+{
+	return frameOfLearning == LEARNING_FRAMES;
+}
+
+//=================================================================================================
+
 void pr::Detector::reset()
 {
+	frameOfLearning = 0;
 	contours.clear();
 	hull[0].clear();
 	hullNum.clear();

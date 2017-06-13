@@ -23,26 +23,26 @@ namespace pr
 		bool isRunning() const;
 
 	private:
-		pr::SettingsManager settings;
+		const std::string WINDOW_NAME;
+		const int WAITING_TIME;
+
 		cv::VideoCapture capture;
 		pr::Detector detector;
 		pr::Detector::Gesture lastGesture;
-		cv::BackgroundSubtractorMOG2 subtractor;
 		pr::CommandExecutor executor;
 		bool running;
 		bool pause;
-		int frameOfLearning;
 
 		void createCommands();
 		void processFrame(cv::Mat& frame, cv::Mat& processedFrame) const;
-		void applySubtractor(cv::Mat& frame);
+		void subtractBackground(cv::Mat& processedFrame);
 		void buildContours(cv::Mat& frame, const cv::Mat& processedFrame);
 		void processGesture();
 		void displayFrame(const cv::Mat& frame) const;
 		void handleInput();
 		void switchPause();
 		void print(const std::string& message) const;
+		void showCommandsList() const;
 		void showHelp() const;
-		bool isLearned() const;
 	};
 }

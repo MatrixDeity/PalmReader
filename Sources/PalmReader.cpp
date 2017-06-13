@@ -3,15 +3,14 @@
 //=================================================================================================
 
 pr::PalmReader::PalmReader(const SettingsManager& settings) :
-	settings(settings),
+	WINDOW_NAME(settings.windowName),
+	WAITING_TIME(settings.waitingTime),
 	capture(CV_CAP_ANY),
-	detector(settings.palmMinSize, settings.defectMinLength),
+	detector(settings),
 	lastGesture(pr::Detector::Gesture::NONE),
-	subtractor(settings.historyLength, settings.thresholdRate),
 	executor(),
 	running(false),
-	pause(settings.suspended),
-	frameOfLearning(0)
+	pause(settings.suspended)
 {
 	createCommands();
 	cv::namedWindow(settings.windowName);
@@ -41,7 +40,7 @@ void pr::PalmReader::run()
 		processFrame(frame, processedFrame);
 		if (!pause)
 		{
-			applySubtractor(processedFrame);
+			subtractBackground(processedFrame);
 			buildContours(frame, processedFrame);
 			processGesture();
 		}
@@ -93,24 +92,23 @@ void pr::PalmReader::processFrame(cv::Mat& frame, cv::Mat& processedFrame) const
 
 //=================================================================================================
 
-void pr::PalmReader::applySubtractor(cv::Mat& frame)
+void pr::PalmReader::subtractBackground(cv::Mat& processedFrame)
 {
-	if (!isLearned())
+	if (!detector.isLearned())
 	{
-		subtractor(frame, frame, settings.learningRate);
-		++frameOfLearning;
-		if (isLearned())
-			print("Subtractor learned!");
+		detector.learnSubtractor(processedFrame);
+		if (detector.isLearned())
+			print("Detector is learned!");
 	}
 	else
-		subtractor(frame, frame, 0.0);
+		detector.applySubtractor(processedFrame);
 }
 
 //=================================================================================================
 
 void pr::PalmReader::buildContours(cv::Mat& frame, const cv::Mat& processedFrame)
 {
-	if (!isLearned())
+	if (!detector.isLearned())
 		return;
 	
 	detector.buildContours(frame, processedFrame);
@@ -144,26 +142,29 @@ void pr::PalmReader::processGesture()
 
 void pr::PalmReader::displayFrame(const cv::Mat& frame) const
 {
-	cv::imshow(settings.windowName, frame);
+	cv::imshow(WINDOW_NAME, frame);
 }
 
 //=================================================================================================
 
 void pr::PalmReader::handleInput()
 {
-	int key = ::tolower(cv::waitKey(settings.waitingTime));
+	int key = ::tolower(cv::waitKey(WAITING_TIME));
 	switch (key)
 	{
-	case VK_ESCAPE:
-	case 'q':
-		stop();
-		break;
 	case VK_SPACE:
 	case 'p':
 		switchPause();
 		break;
+	case 'c':
+		showCommandsList();
+		break;
 	case 'h':
 		showHelp();
+		break;
+	case VK_ESCAPE:
+	case 'q':
+		stop();
 		break;
 	default:
 		break;
@@ -177,7 +178,6 @@ void pr::PalmReader::switchPause()
 	pause = !pause;
 	if (pause)
 	{
-		frameOfLearning = 0;
 		detector.reset();
 		print("Recognition suspended!");
 	}
@@ -194,21 +194,25 @@ void pr::PalmReader::print(const std::string& message) const
 
 //=================================================================================================
 
-void pr::PalmReader::showHelp() const
+void pr::PalmReader::showCommandsList() const
 {
-	std::cout
-		<< "[Helper]:\n"
-		<< "The PalmReader welcomes you!\n"
-		<< "- Press 'Space' or 'P' to resume / suspend recognition.\n"
-		<< "- Press 'H' to show this help.\n"
-		<< "- Press 'Esc' or 'Q' to quit program.\n"
-		<< "Writen by MatrixDeity, 2016 - 2017."
-		<< std::endl;
+	const pr::CommandExecutor::Commands& commands = executor.getCommands();
+	print("Commands list: ");
+	for (const auto& command : commands)
+		std::cout << command.first << std::endl;
 }
 
 //=================================================================================================
 
-bool pr::PalmReader::isLearned() const
+void pr::PalmReader::showHelp() const
 {
-	return frameOfLearning >= settings.learningFrames;
+	std::cout
+		<< "[Helper]: "
+		<< "The PalmReader welcomes you!\n"
+		<< "- Press 'Space' or 'P' to resume / suspend recognition.\n"
+		<< "- Press 'C' to show commands list.\n"
+		<< "- Press 'H' to show this help.\n"
+		<< "- Press 'Esc' or 'Q' to quit program.\n"
+		<< "Writen by MatrixDeity, 2017."
+		<< std::endl;
 }
