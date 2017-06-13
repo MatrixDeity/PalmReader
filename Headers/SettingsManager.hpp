@@ -30,6 +30,10 @@ namespace pr
 			loadSettings();
 		}
 
+		~SettingsManager()
+		{
+		}
+
 	private:
 		static const int MAX_CONTENT_SIZE = 256;
 

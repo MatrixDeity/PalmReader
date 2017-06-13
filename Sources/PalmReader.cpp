@@ -8,10 +8,12 @@ pr::PalmReader::PalmReader(const SettingsManager& settings) :
 	detector(settings.palmMinSize, settings.defectMinLength),
 	lastGesture(pr::Detector::Gesture::NONE),
 	subtractor(settings.historyLength, settings.thresholdRate),
+	executor(),
 	running(false),
 	pause(settings.suspended),
 	frameOfLearning(0)
 {
+	createCommands();
 	cv::namedWindow(settings.windowName);
 }
 
@@ -68,6 +70,21 @@ bool pr::PalmReader::isRunning() const
 
 //=================================================================================================
 
+void pr::PalmReader::createCommands()
+{
+	executor.addCommand("showSystemInfo", []()
+	{
+		WinExec("msinfo32", SW_HIDE);
+	});
+
+	executor.addCommand("closeActiveWindow", []()
+	{
+		CloseWindow(GetActiveWindow());
+	});
+}
+
+//=================================================================================================
+
 void pr::PalmReader::processFrame(cv::Mat& frame, cv::Mat& processedFrame) const
 {
 	cv::flip(frame, frame, 1);
@@ -111,9 +128,11 @@ void pr::PalmReader::processGesture()
 	{
 	case Gesture::FIRST:
 		print("First gesture recognized!");
+		executor.execute("showSystemInfo");
 		break;
 	case Gesture::SECOND:
 		print("Second gesture recognized!");
+		executor.execute("closeActiveWindow");
 		break;
 	default:
 		return;
@@ -153,13 +172,6 @@ void pr::PalmReader::handleInput()
 
 //=================================================================================================
 
-bool pr::PalmReader::isLearned() const
-{
-	return frameOfLearning >= settings.learningFrames;
-}
-
-//=================================================================================================
-
 void pr::PalmReader::switchPause()
 {
 	pause = !pause;
@@ -192,4 +204,11 @@ void pr::PalmReader::showHelp() const
 		<< "- Press 'Esc' or 'Q' to quit program.\n"
 		<< "Writen by MatrixDeity, 2016 - 2017."
 		<< std::endl;
+}
+
+//=================================================================================================
+
+bool pr::PalmReader::isLearned() const
+{
+	return frameOfLearning >= settings.learningFrames;
 }
