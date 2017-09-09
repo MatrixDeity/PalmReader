@@ -20,7 +20,7 @@ namespace pr
 			SECOND
 		};
 
-		Detector(const SettingsManager& settings);
+		explicit Detector(const SettingsManager& settings);
 		~Detector();
 		void buildContours(cv::Mat& frame, const cv::Mat& processedFrame);
 		void reset();

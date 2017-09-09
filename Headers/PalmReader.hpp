@@ -16,7 +16,7 @@ namespace pr
 	class PalmReader
 	{
 	public:
-		PalmReader(const SettingsManager& settings);
+		explicit PalmReader(const SettingsManager& settings);
 		~PalmReader();
 		void run();
 		void stop();
