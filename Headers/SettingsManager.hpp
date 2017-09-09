@@ -24,7 +24,7 @@ namespace pr
 		int waitingTime;
 		bool suspended;
 
-		SettingsManager(const std::string& pathToExe) :
+		explicit SettingsManager(const std::string& pathToExe) :
 			path(pathToExe.substr(0, pathToExe.find_last_of("\\")).append("\\settings.ini"))
 		{
 			loadSettings();
